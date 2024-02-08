@@ -24,6 +24,24 @@ is_colliding_rect_rect :: proc(r1: rl.Rectangle, r2: rl.Rectangle) -> bool{
     return false 
 }
 
+is_colliding_top :: proc(r1: rl.Rectangle, r2: rl.Rectangle, epsilon: f32 = 10.0) -> bool{
+    if r1.y + r1.height + epsilon > r2.y || r1.y + r1.height - epsilon < r2.y{
+        if r1.x + r1.width > r2.x && r1.x < r2.x + r2.width{
+            return true
+        }
+    }
+    return false
+}
+
+is_colliding_bottom :: proc(r1: rl.Rectangle, r2: rl.Rectangle) -> bool{
+    if r1.y < r2.y + r2.height && r1.y + r1.height - 20.0 > r2.y{
+        if r1.x + r1.width > r2.x && r1.x < r2.x + r2.width{
+            return true
+        }
+    }
+    return false
+}
+
 main :: proc(){
     rl.InitWindow(WIDTH, HEIGHT, "ttls")
     defer rl.CloseWindow()
@@ -46,7 +64,7 @@ main :: proc(){
     xh: f32 = 100.0
     h: f32 = 120.0
 
-    speed: f32 = 6.0
+    speed: f32 = 7.0
     ver_speed := 2 * h * speed / xh / 1.5
     g := -50 * h * (speed * speed) / (xh * xh)
 
@@ -60,8 +78,16 @@ main :: proc(){
 
     floor: rl.Rectangle = {0, HEIGHT - 120, WIDTH, 120}
     test_block: rl.Rectangle = {WIDTH / 2 - 20 + 200, HEIGHT - 220, 200, 100}
+    test_block2: rl.Rectangle = {200, 200, 100, 100}
 
-    jump := false
+    active_block: rl.Rectangle
+
+    blocks: [dynamic]rl.Rectangle
+    append(&blocks, floor)
+    append(&blocks, test_block)
+    append(&blocks, test_block2)
+
+    collding_with_floor := true 
     for !rl.WindowShouldClose(){
         rl.BeginDrawing()
         defer rl.EndDrawing()
@@ -70,46 +96,59 @@ main :: proc(){
 
 
         if rl.IsKeyDown(.A){
-            player.rect.x -= player.speed
+            //add collission
+            next_rect := rl.Rectangle{player.rect.x - player.speed, player.rect.y, player.rect.width, player.rect.height}
+            if !is_colliding_rect_rect(next_rect, test_block) && !is_colliding_rect_rect(next_rect, test_block2){
+                player.rect = next_rect
+            }
         }
         if rl.IsKeyDown(.D){
-            player.rect.x += player.speed
-        }
-        if rl.IsKeyDown(.W){
-            player.rect.y -= player.speed
-        }
-        if rl.IsKeyDown(.S){
-            player.rect.y += player.speed
+            //add collission
+            next_rect := rl.Rectangle{player.rect.x + player.speed, player.rect.y, player.rect.width, player.rect.height}
+            if !is_colliding_rect_rect(next_rect, test_block) && !is_colliding_rect_rect(next_rect, test_block2){
+                player.rect = next_rect
+            }
         }
 
-        if is_colliding_rect_rect(player.rect, test_block){
-            player_color = second_color
-        }
-        else {
-            player_color = first_color
-        }
-
-        /*
         if rl.IsKeyPressed(.SPACE){
-            jump = true
+            collding_with_floor = false 
             player.ver_speed = 2 * h * speed / xh / 1.5
             player.rect.y -= 10.0
         }
-        */
 
-        /*
-        if rl.CheckCollisionRecs(player.rect, floor) || rl.CheckCollisionRecs(player.rect, test_block){
-            jump = false
+        for block in blocks{
+            if is_colliding_rect_rect(player.rect, block){
+                if is_colliding_bottom(player.rect, block){
+                    player.rect.y = block.y + block.height + 5.0
+                    player.ver_speed = 0.0
+                }
+                else if is_colliding_top(player.rect, block){
+                    player.rect.y = block.y - player.rect.height
+                    active_block = block
+                    collding_with_floor = true
+                }
+            }
         }
-        */
 
-        if jump{
+        if active_block.width != 0{
+            if !is_colliding_top(player.rect, active_block){
+                collding_with_floor = false
+
+                active_block.x = 0
+                active_block.y = 0
+                active_block.height = 0
+                active_block.width = 0
+            }
+        }
+
+        if !collding_with_floor{
             player.rect.y -= player.ver_speed + 0.5 * g * dt * dt
             player.ver_speed += g * dt
         }
 
-        //rl.DrawRectangle(i32(floor.x), i32(floor.y), i32(floor.width), i32(floor.height), rl.WHITE)
+        rl.DrawRectangle(i32(floor.x), i32(floor.y), i32(floor.width), i32(floor.height), rl.WHITE)
         rl.DrawRectangle(i32(test_block.x), i32(test_block.y), i32(test_block.width), i32(test_block.height), rl.WHITE)
+        rl.DrawRectangle(i32(test_block2.x), i32(test_block2.y), i32(test_block2.width), i32(test_block2.height), rl.WHITE)
 
         rl.DrawRectangle(i32(player.rect.x), i32(player.rect.y), i32(player.rect.width), i32(player.rect.height), player_color)
     }
