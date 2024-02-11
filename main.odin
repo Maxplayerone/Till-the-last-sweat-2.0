@@ -2,6 +2,7 @@ package main
 
 import "core:fmt"
 import math "core:math/linalg"
+import "core:math/rand"
 
 import rl "vendor:raylib"
 
@@ -86,25 +87,96 @@ Bullet :: struct{
     dir: rl.Vector2,
 }
 
+is_duplicate :: proc(num: int, arr: [5]int) -> bool{
+    for n in arr{
+        if num == n{
+            return true
+        }
+    }
+    return false
+}
+
+is_same_hor :: proc(num: int, arr: [5]int) -> bool{
+    t := 0
+    //top row
+    if num > 5{
+        for n in arr{
+            if num - 3 == n || num - 6 == n{
+                t += 1
+                if t == 2{
+                    return true
+                }
+            }
+        }
+    }
+    //mid row
+    if num > 2 && num < 6{
+        for n in arr{
+            if num - 3 == n || num + 3 == n{
+                t += 1
+                if t == 2{
+                    return true
+                }
+            }
+        }
+    }
+    if num < 3{
+        for n in arr{
+            if num + 6 == n || num + 3 == n{
+                t += 1
+                if t == 2{
+                    return true
+                }
+            }
+        }
+    }
+    return false
+}
+
+is_same_ver :: proc(num: int, arr: [5]int) -> bool{
+    t := 0
+    //6 3 0
+    if num % 3 == 0{
+        for n in arr{
+            if num + 1 == n || num + 2 == n{
+                t += 1
+                if t == 2{
+                    return true
+                }
+            }
+        }
+    }
+    //7 4 1
+    if num % 3 == 1{
+        for n in arr{
+            if num + 1 == n || num - 1 == n{
+                t += 1
+                if t == 2{
+                    return true
+                }
+            }
+        }
+    }
+    //8 5 2
+    if num % 3 == 2{
+        for n in arr{
+            if num - 1 == n || num - 2 == n{
+                t += 1
+                if t == 2{
+                    return true
+                }
+            }
+        }
+    }
+    return false
+}
+
 main :: proc(){
     rl.InitWindow(WIDTH, HEIGHT, "ttls")
     defer rl.CloseWindow()
 
     rl.SetTargetFPS(60)
 
-    /*
-    //NOTES
-    //f(t) = 1/2gt^2 + vot + po //next positiono
-
-    vo = 2hvx/xh
-    g = -2hvx^2/xh^2
-
-    pos += vel * dt + 1/2acc * dt^2
-    vel += acc * t
-
-    xh = 100
-    h = 120
-    */
     xh: f32 = 100.0
     h: f32 = 120.0
 
@@ -135,6 +207,19 @@ main :: proc(){
 
     bullets: [dynamic]Bullet
     bullet_speed: f32 = 15.0
+
+    chosen_sectors: [5]int = {-1, -1, -1, -1, -1}
+    i := 0
+    for i < 5{
+        num := int(rand.int31_max(9))
+        for is_same_hor(num, chosen_sectors) || is_duplicate(num, chosen_sectors) || is_same_ver(num, chosen_sectors){
+            num = int(rand.int31_max(9))
+        }
+        chosen_sectors[i] = num
+        i += 1
+    }
+
+    fmt.println(chosen_sectors)
 
     collding_with_floor := true 
     for !rl.WindowShouldClose(){
