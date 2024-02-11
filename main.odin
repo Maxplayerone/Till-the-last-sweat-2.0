@@ -45,7 +45,7 @@ is_colliding_bottom :: proc(r1: rl.Rectangle, r2: rl.Rectangle) -> bool{
 }
 
 
-bullet_radius: f32 = 10.0
+bullet_radius: f32 = 7.0
 is_colliding_rect_circle :: proc(b: Bullet, r: rl.Rectangle) -> bool{
     min := rl.Vector2{r.x, r.y}
     max := rl.Vector2{r.x + r.width, r.y + r.height}
@@ -114,7 +114,7 @@ main :: proc(){
     bullets: [dynamic]Bullet
     bullet_speed: f32 = 15.0
 
-    blocks := create_map4x1()
+    blocks, lava_rect := create_map4x1()
 
     collding_with_floor := false 
     for !rl.WindowShouldClose(){
@@ -169,6 +169,10 @@ main :: proc(){
                 }
             }
         }
+        if is_colliding_rect_rect(player.rect, lava_rect){
+            fmt.println("your ided")
+            break
+        }
 
         for b, i in bullets{
             for block in blocks{
@@ -208,9 +212,11 @@ main :: proc(){
             append(&bullets, Bullet{rl.Vector2{gun_rect.x, gun_rect.y}, norm_vec})
         }
 
+        rl.DrawRectangleRec(lava_rect, rl.Color{255, 117, 79, 255})
         for block in blocks{
             rl.DrawRectangle(i32(block.x), i32(block.y), i32(block.width), i32(block.height), rl.WHITE)
         }
+
         rl.DrawRectangle(i32(player.rect.x), i32(player.rect.y), i32(player.rect.width), i32(player.rect.height), player_color)
 
         gun_rect = {player.rect.x + 20, player.rect.y + 20, 20, 10}

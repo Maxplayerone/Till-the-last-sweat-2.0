@@ -10,7 +10,7 @@ create_map3x3 :: proc() -> [5]rl.Rectangle{
     i := 0
     for i < 5{
         num := int(rand.int31_max(9))
-        for is_same_hor(num, chosen_sectors) || is_duplicate(num, chosen_sectors[:]) || is_same_ver(num, chosen_sectors){
+        for is_same_hor(num, chosen_sectors) || is_duplicate(num, chosen_sectors[:]) || is_same_ver(num, chosen_sectors[:]){
             num = int(rand.int31_max(9))
         }
         chosen_sectors[i] = num
@@ -35,7 +35,7 @@ create_map3x2 :: proc() -> [4]rl.Rectangle{
     i := 0
     for i < sec_len{
         num := int(rand.int31_max(6))
-        for is_duplicate(num, chosen_sectors[:]){
+        for is_duplicate(num, chosen_sectors[:]) || is_same_ver(num, chosen_sectors[:]){
             num = int(rand.int31_max(6))
         }
         chosen_sectors[i] = num
@@ -55,7 +55,7 @@ create_map3x2 :: proc() -> [4]rl.Rectangle{
     return blocks
 }
 
-create_map4x1 :: proc() -> [4]rl.Rectangle{
+create_map4x1 :: proc() -> ([4]rl.Rectangle, rl.Rectangle){
     chosen_sectors: [4]int = {-1, -1, -1, -1}
     i := 0
     for i < 4{
@@ -63,8 +63,6 @@ create_map4x1 :: proc() -> [4]rl.Rectangle{
         chosen_sectors[i] = num
         i += 1
     }
-
-    fmt.println(chosen_sectors)
 
     block_diff_x := WIDTH / 4
 
@@ -76,7 +74,7 @@ create_map4x1 :: proc() -> [4]rl.Rectangle{
 
         blocks[j] = rl.Rectangle{f32(block_diff_x * j), f32(HEIGHT - 100.0), f32(block_diff_x), 100.0}
     }
-    return blocks
+    return blocks, rl.Rectangle{0, HEIGHT - 50, WIDTH, 50}
 }
 
 is_duplicate :: proc(num: int, arr: []int) -> bool{
@@ -125,7 +123,7 @@ is_same_hor :: proc(num: int, arr: [5]int) -> bool{
     return false
 }
 
-is_same_ver :: proc(num: int, arr: [5]int) -> bool{
+is_same_ver :: proc(num: int, arr: []int) -> bool{
     t := 0
     //6 3 0
     if num % 3 == 0{
