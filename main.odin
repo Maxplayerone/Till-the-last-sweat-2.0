@@ -1,6 +1,8 @@
 package main
 
 import "core:fmt"
+import math "core:math/linalg"
+
 import rl "vendor:raylib"
 
 WIDTH :: 960
@@ -40,6 +42,19 @@ is_colliding_bottom :: proc(r1: rl.Rectangle, r2: rl.Rectangle) -> bool{
         }
     }
     return false
+}
+
+vec_len :: proc(x: f32, y: f32) -> f32{
+    return math.sqrt(x * x + y * y)
+}
+
+vec_norm :: proc(x: f32, y: f32, len: f32) -> rl.Vector2{
+    return rl.Vector2{x / len, y / len}
+}
+
+Bullet :: struct{
+    pos: rl.Vector2,
+    dir: rl.Vector2,
 }
 
 main :: proc(){
@@ -86,6 +101,11 @@ main :: proc(){
     append(&blocks, floor)
     append(&blocks, test_block)
     append(&blocks, test_block2)
+
+    gun_rect: rl.Rectangle = {player.rect.x + 20, player.rect.y + 20, 20, 10}
+
+    bullets: [dynamic]Bullet
+    bullet_speed: f32 = 15.0
 
     collding_with_floor := true 
     for !rl.WindowShouldClose(){
@@ -146,10 +166,37 @@ main :: proc(){
             player.ver_speed += g * dt
         }
 
+        mouse_pos := rl.GetMousePosition()
+        dx := mouse_pos.x - player.rect.x
+        dy := mouse_pos.y - player.rect.y
+        deg := math.atan2(dy, dx) * (180 / 3.14)
+
+        length := vec_len(dx, dy)
+        norm_vec := vec_norm(dx, dy, length)
+        //fmt.println(norm_vec)
+
+        if rl.IsMouseButtonPressed(.LEFT){
+            append(&bullets, Bullet{rl.Vector2{gun_rect.x, gun_rect.y}, norm_vec})
+        }
+
         rl.DrawRectangle(i32(floor.x), i32(floor.y), i32(floor.width), i32(floor.height), rl.WHITE)
         rl.DrawRectangle(i32(test_block.x), i32(test_block.y), i32(test_block.width), i32(test_block.height), rl.WHITE)
         rl.DrawRectangle(i32(test_block2.x), i32(test_block2.y), i32(test_block2.width), i32(test_block2.height), rl.WHITE)
 
         rl.DrawRectangle(i32(player.rect.x), i32(player.rect.y), i32(player.rect.width), i32(player.rect.height), player_color)
+
+        gun_rect = {player.rect.x + 20, player.rect.y + 20, 20, 10}
+        rl.DrawRectanglePro(gun_rect, {0.0, 0.0}, deg, rl.BROWN)
+
+        //bullet_rect.x = gun_rect.x + norm_vec.x * 5.0
+        //bullet_rect.y = gun_rect.y + norm_vec.y * 5.0
+        for i in 0..<len(bullets){
+           b := bullets[i] 
+           defer bullets[i] = b
+
+            rl.DrawCircle(i32(b.pos.x), i32(b.pos.y), 10.0, rl.YELLOW)
+            b.pos.x += b.dir.x * bullet_speed
+            b.pos.y += b.dir.y * bullet_speed
+        }
     }
 }
