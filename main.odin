@@ -192,16 +192,7 @@ main :: proc(){
         ver_speed = ver_speed,
     }
 
-    floor: rl.Rectangle = {0, HEIGHT - 120, WIDTH, 120}
-    test_block: rl.Rectangle = {WIDTH / 2 - 20 + 200, HEIGHT - 220, 200, 100}
-    test_block2: rl.Rectangle = {200, 200, 100, 100}
-
     active_block: rl.Rectangle
-
-    blocks: [dynamic]rl.Rectangle
-    append(&blocks, floor)
-    append(&blocks, test_block)
-    append(&blocks, test_block2)
 
     gun_rect: rl.Rectangle = {player.rect.x + 20, player.rect.y + 20, 20, 10}
 
@@ -218,8 +209,17 @@ main :: proc(){
         chosen_sectors[i] = num
         i += 1
     }
-
     fmt.println(chosen_sectors)
+    block_diff_x := WIDTH / 3
+    block_diff_y := 250
+
+    blocks: [5]rl.Rectangle
+    for num, j in chosen_sectors{
+        hor := num % 3
+        ver := int(num / 3)
+
+        blocks[j] = rl.Rectangle{f32(block_diff_x * hor), f32(HEIGHT - block_diff_y * ver - 100.0), f32(block_diff_x - 20), 100.0}
+    }
 
     collding_with_floor := true 
     for !rl.WindowShouldClose(){
@@ -230,16 +230,27 @@ main :: proc(){
 
 
         if rl.IsKeyDown(.A){
-            //add collission
             next_rect := rl.Rectangle{player.rect.x - player.speed, player.rect.y, player.rect.width, player.rect.height}
-            if !is_colliding_rect_rect(next_rect, test_block) && !is_colliding_rect_rect(next_rect, test_block2){
+
+            can_move := true
+            for block in blocks{
+                if is_colliding_rect_rect(next_rect, block){
+                    can_move = false
+                }
+            }
+            if can_move{
                 player.rect = next_rect
             }
         }
         if rl.IsKeyDown(.D){
-            //add collission
             next_rect := rl.Rectangle{player.rect.x + player.speed, player.rect.y, player.rect.width, player.rect.height}
-            if !is_colliding_rect_rect(next_rect, test_block) && !is_colliding_rect_rect(next_rect, test_block2){
+            can_move := true
+            for block in blocks{
+                if is_colliding_rect_rect(next_rect, block){
+                    can_move = false
+                }
+            }
+            if can_move{
                 player.rect = next_rect
             }
         }
@@ -302,17 +313,14 @@ main :: proc(){
             append(&bullets, Bullet{rl.Vector2{gun_rect.x, gun_rect.y}, norm_vec})
         }
 
-        rl.DrawRectangle(i32(floor.x), i32(floor.y), i32(floor.width), i32(floor.height), rl.WHITE)
-        rl.DrawRectangle(i32(test_block.x), i32(test_block.y), i32(test_block.width), i32(test_block.height), rl.WHITE)
-        rl.DrawRectangle(i32(test_block2.x), i32(test_block2.y), i32(test_block2.width), i32(test_block2.height), rl.WHITE)
-
+        for block in blocks{
+            rl.DrawRectangle(i32(block.x), i32(block.y), i32(block.width), i32(block.height), rl.WHITE)
+        }
         rl.DrawRectangle(i32(player.rect.x), i32(player.rect.y), i32(player.rect.width), i32(player.rect.height), player_color)
 
         gun_rect = {player.rect.x + 20, player.rect.y + 20, 20, 10}
         rl.DrawRectanglePro(gun_rect, {0.0, 0.0}, deg, rl.BROWN)
 
-        //bullet_rect.x = gun_rect.x + norm_vec.x * 5.0
-        //bullet_rect.y = gun_rect.y + norm_vec.y * 5.0
         for i in 0..<len(bullets){
            b := bullets[i] 
            defer bullets[i] = b
