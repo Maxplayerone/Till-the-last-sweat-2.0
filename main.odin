@@ -44,6 +44,35 @@ is_colliding_bottom :: proc(r1: rl.Rectangle, r2: rl.Rectangle) -> bool{
     return false
 }
 
+
+bullet_radius: f32 = 10.0
+is_colliding_rect_circle :: proc(b: Bullet, r: rl.Rectangle) -> bool{
+    min := rl.Vector2{r.x, r.y}
+    max := rl.Vector2{r.x + r.width, r.y + r.height}
+
+    closest := b.pos
+
+    if closest.x < min.x{
+        closest.x = min.x
+    }
+    if closest.x > max.x{
+        closest.x = max.x
+    }
+
+    if closest.y < min.y{
+        closest.y = min.y
+    }
+    if closest.y > max.y{
+        closest.y = max.y
+    }
+
+    rect_center := rl.Vector2{r.x + r.width / 2, r.y + r.height / 2}
+    rect_to_circle := rl.Vector2{b.pos.x - closest.x, b.pos.y - closest.y}
+    length := vec_len(rect_to_circle.x, rect_to_circle.y)
+
+    return length * length <= bullet_radius * bullet_radius
+}
+
 vec_len :: proc(x: f32, y: f32) -> f32{
     return math.sqrt(x * x + y * y)
 }
@@ -150,6 +179,15 @@ main :: proc(){
             }
         }
 
+        for b, i in bullets{
+            for block in blocks{
+                if is_colliding_rect_circle(b, block){
+                    fmt.println("hi")
+                    unordered_remove(&bullets, i)
+                }
+            }
+        }
+
         if active_block.width != 0{
             if !is_colliding_top(player.rect, active_block){
                 collding_with_floor = false
@@ -194,7 +232,7 @@ main :: proc(){
            b := bullets[i] 
            defer bullets[i] = b
 
-            rl.DrawCircle(i32(b.pos.x), i32(b.pos.y), 10.0, rl.YELLOW)
+            rl.DrawCircle(i32(b.pos.x), i32(b.pos.y), bullet_radius, rl.YELLOW)
             b.pos.x += b.dir.x * bullet_speed
             b.pos.y += b.dir.y * bullet_speed
         }
