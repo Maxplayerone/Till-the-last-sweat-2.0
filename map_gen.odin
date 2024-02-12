@@ -55,7 +55,7 @@ create_map3x2 :: proc() -> [4]rl.Rectangle{
     return blocks
 }
 
-create_map4x1 :: proc() -> ([4]rl.Rectangle, rl.Rectangle){
+create_map4x1 :: proc() -> ([4]rl.Rectangle, rl.Rectangle, int){
     chosen_sectors: [4]int = {-1, -1, -1, -1}
     i := 0
     for i < 4{
@@ -74,7 +74,17 @@ create_map4x1 :: proc() -> ([4]rl.Rectangle, rl.Rectangle){
 
         blocks[j] = rl.Rectangle{f32(block_diff_x * j), f32(HEIGHT - 100.0), f32(block_diff_x), 100.0}
     }
-    return blocks, rl.Rectangle{0, HEIGHT - 50, WIDTH, 50}
+    return blocks, rl.Rectangle{0, HEIGHT - 50, WIDTH, 50}, 4
+}
+
+create_map4x1_no_lava :: proc() -> ([4]rl.Rectangle, rl.Rectangle, int){
+
+    block_diff_x := WIDTH / 4
+    blocks: [4]rl.Rectangle
+    for i in 0..<4{
+        blocks[i] = rl.Rectangle{f32(block_diff_x * i), f32(HEIGHT - 100.0), f32(block_diff_x), 100.0}
+    }
+    return blocks, rl.Rectangle{0, HEIGHT - 50, WIDTH, 50}, 4
 }
 
 is_duplicate :: proc(num: int, arr: []int) -> bool{

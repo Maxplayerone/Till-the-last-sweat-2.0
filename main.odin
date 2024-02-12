@@ -2,6 +2,7 @@ package main
 
 import "core:fmt"
 import math "core:math/linalg"
+import "core:math/rand"
 
 import rl "vendor:raylib"
 
@@ -114,9 +115,13 @@ main :: proc(){
     bullets: [dynamic]Bullet
     bullet_speed: f32 = 15.0
 
-    blocks, lava_rect := create_map4x1()
+    blocks, lava_rect, num_of_blocks := create_map4x1_no_lava()
+
+    enemies: [dynamic]rl.Rectangle
+    enemy_speed: f32 = 4.0
 
     collding_with_floor := false 
+    can_jump := true
     for !rl.WindowShouldClose(){
         rl.BeginDrawing()
         defer rl.EndDrawing()
@@ -150,10 +155,11 @@ main :: proc(){
             }
         }
 
-        if rl.IsKeyPressed(.SPACE){
+        if rl.IsKeyPressed(.SPACE) && can_jump{
             collding_with_floor = false 
             player.ver_speed = 2 * h * speed / xh / 1.5
             player.rect.y -= 10.0
+            can_jump = false
         }
 
         for block in blocks{
@@ -166,6 +172,7 @@ main :: proc(){
                     player.rect.y = block.y - player.rect.height
                     active_block = block
                     collding_with_floor = true
+                    can_jump = true
                 }
             }
         }
@@ -208,6 +215,34 @@ main :: proc(){
         norm_vec := vec_norm(dx, dy, length)
         //fmt.println(norm_vec)
 
+        if rl.IsKeyPressed(.Q){
+            rand_num := int(rand.int31_max(i32(num_of_blocks)))
+            fmt.println(rand_num)
+            enemy_rect := rl.Rectangle{
+                x = blocks[rand_num].x + blocks[rand_num].width / 2,
+                y = blocks[rand_num].y - 50,
+                width = 40.0, 
+                height = 40.0,
+            }
+
+            append(&enemies, enemy_rect)
+        }
+
+        for i in 0..<len(enemies){
+            e := enemies[i]
+            defer enemies[i] = e
+            if e.x != player.rect.x{
+                diff_x := e.x - player.rect.x
+                //if it's positive then the enemy if to the right of the player
+                if diff_x > 0.0{
+                    e.x -= enemy_speed
+                }
+                else{
+                    e.x += enemy_speed
+                }
+            }
+        }
+
         if rl.IsMouseButtonPressed(.LEFT){
             append(&bullets, Bullet{rl.Vector2{gun_rect.x, gun_rect.y}, norm_vec})
         }
@@ -221,6 +256,10 @@ main :: proc(){
 
         gun_rect = {player.rect.x + 20, player.rect.y + 20, 20, 10}
         rl.DrawRectanglePro(gun_rect, {0.0, 0.0}, deg, rl.BROWN)
+
+        for enemy in enemies{
+            rl.DrawRectangleRec(enemy, rl.Color{232, 79, 44, 255})
+        }
 
         for i in 0..<len(bullets){
            b := bullets[i] 
